@@ -9,11 +9,13 @@ w = Window("osc controls", Rect(
 ))
 .front;
 w.view.background_(Color.black);
-// OSC SEL AND POWER BUTTONS -- corrigir o play dos synths (boolean) e problemas de fase
+// OSC SEL AND POWER BUTTONS
+// Globals
+~sin = true!3; ~saw = false!3; ~pul = false!3; ~oscSel = nil!3; ~synths = nil!9; ~hzBox = nil!3;
+~hzs = 200!3; ~amps = 0.3!3;
+
 3.do{
 	| i |
-	~sin = nil!3; ~saw = nil!3; ~pul = nil!3; ~oscSel = nil!3; ~synths = nil!9; ~hzBox = nil!3;
-	~sin[i] = true; ~saw[i] = false; ~pul[i] = false;
 	~oscSel[i] = Button(w.view, Rect(50, 10+(i*40), 30, 30))
 	.states_([
 		["sin", Color.black, Color.white],
@@ -38,17 +40,28 @@ w.view.background_(Color.black);
 		| msg |
 		if(msg.value == 1) {
 			case
-			{~sin[i]} {~synths[i] = Synth(\xyzSin).register}
-			{~saw[i]} {~synths[i] = Synth(\xyzSaw).register}
-			{~pul[i]} {~synths[i] = Synth(\xyzPul).register};
+			{~sin[i]} {~synths[i] = Synth(\xyzSin, [
+				\freq, ~hzs[i],
+				\amp, ~amps[i]
+			]).register}
+			{~saw[i]} {~synths[i] = Synth(\xyzSaw, [
+				\freq, ~hzs[i],
+				\amp, ~amps[i]
+			]).register}
+			{~pul[i]} {~synths[i] = Synth(\xyzPul. [
+				\freq, ~hzs[i],
+				\amp, ~amps[i]
+			]).register};
 		} {~synths[i].free}
 	});
 	~hzBox[i] = NumberBox(w.view, Rect(90, 10+(i*40), 70, 30))
 	.font_(Font("Jura", 10, true))
 	.value_(200)
+	.clipLo_(20).clipHi_(2e4)
 	.action_({
 		| msg |
 		if(~synths[i].isPlaying) {~synths[i].set(\freq, msg.value)};
+		~hzs[i] = msg.value;
 	});
 };
 
